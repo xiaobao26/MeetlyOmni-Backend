@@ -1,0 +1,6 @@
+@MeetlyOmni_HostAddress = http://localhost:5246
+
+GET {{MeetlyOmni_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
