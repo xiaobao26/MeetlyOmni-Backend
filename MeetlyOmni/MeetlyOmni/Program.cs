@@ -1,6 +1,14 @@
+using System.Text.Json;
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 using MeetlyOmni;
+using MeetlyOmni.Contracts.IServices;
+using MeetlyOmni.Filters.ActionFilter;
+using MeetlyOmni.Filters.ResultFilter;
+using MeetlyOmni.Models;
+using MeetlyOmni.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,6 +45,39 @@ builder
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
+
+// Add CORS policy
+
+// Disable auto model validation
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+    options.SuppressModelStateInvalidFilter = true
+);
+
+// Add services to Dependency injection container
+builder.Services.AddTransient<IEventService, EventService>();
+builder.Services.AddAutoMapper(typeof(Program));
+
+// Configure database connect
+builder.Services.AddDbContext<OmniDbContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("OmniConnectionString"));
+});
+
+// Add filter
+builder
+    .Services.AddControllers(options =>
+    {
+        options.Filters.Add<ModelValidationFilter>();
+        options.Filters.Add<CommonResultFilter>();
+    })
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.SuppressModelStateInvalidFilter = true;
+    })
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
 
 var app = builder.Build();
 
